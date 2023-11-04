@@ -1,0 +1,17 @@
+{% extends 'father.html' %}
+
+{% block contenidoQueCambia %}
+
+<h1>Expected Arrivals</h1>
+
+    <ul>
+      
+        {% for vessel in expected_arrivals %}
+            <li>
+            {{vessel.vessel_name}} 
+            {{vessel.eta_discharge_port}}
+            </li> 
+        {% endfor %}
+    </ul>
+
+{% endblock contenidoQueCambia %}
