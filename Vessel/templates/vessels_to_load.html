@@ -4,4 +4,17 @@
 
 <h1>Vessels To Load</h1>
 
+<ul>
+      
+    {% for item in vessels_to_load %}
+    <li>
+        {{ item.0 }}
+        MV: {{ item.1 }}
+        Port: {{ item.2 }}
+    </li>
+{% endfor %}
+    
+</ul>
+
+
 {% endblock contenidoQueCambia %}

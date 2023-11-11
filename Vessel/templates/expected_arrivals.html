@@ -6,10 +6,11 @@
 
     <ul>
       
-        {% for vessel in expected_arrivals %}
+        {% for item in expected_arrivals %}
             <li>
-            {{vessel.vessel_name}} 
-            {{vessel.eta_discharge_port}}
+                {{ item.0 }}
+                MV: {{ item.1 }}
+                Port: {{ item.2 }}
             </li> 
         {% endfor %}
     </ul>
