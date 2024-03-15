@@ -15,7 +15,7 @@ class LoadingPort(models.Model):
     assigned_vessel_pol = models.ForeignKey('Vessel', null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return  f"{self.loading_port_name}, {self.assigned_vessel_pol}"
+        return  f"{self.loading_port_name}"
 class DischargePort(models.Model):
 
     discharge_port_name = models.CharField(max_length=50, blank=True, null=True)
@@ -59,3 +59,8 @@ class Vessel(models.Model):
 
     def __str__(self):
         return self.vessel_name
+    
+    """
+    def obtener_atributo(self, vessel_name):
+        return getattr(self, vessel_name, None)
+    """

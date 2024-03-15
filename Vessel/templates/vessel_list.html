@@ -1,0 +1,27 @@
+{% extends 'father.html' %}
+{% block contenidoQueCambia %}
+
+<h1>Vessel List</h1>
+    <ul>
+        {% for vessel in vessels %}
+        <li> 
+
+            <strong>{{ vessel.vessel_name }}</strong> <br>
+            <strong>Information:</strong> {{ vessel.vessel_information }} <br>
+            
+            <strong>Loading Port:</strong> {{ vessel.loading_port }} <br>
+               {% for loading_port in vessel.loading_port.all %}
+                 {{ loading_port.loading_port_name }} - ETA: {{ loading_port.eta_loading_port }} <br>
+
+                <!-- Aquí puedes acceder a otros atributos de LoadingPort si es necesario -->
+                {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            <br>
+
+        </li>
+        {% endfor %}
+    </ul>
+
+{% endblock contenidoQueCambia %}
+
+

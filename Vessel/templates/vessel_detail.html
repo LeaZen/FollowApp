@@ -1,0 +1,52 @@
+{% extends 'father.html' %}
+{% block contenidoQueCambia %}
+
+<h1>Vessel Detailed View</h1>
+
+<p><strong>MV:</strong> {{ vessel }}</p>
+
+     <strong>Loading Port:</strong> 
+     <ul>
+        {% for port_info in loading_date_list %}
+        <li> {{ port_info.Port_name }} <br>
+            <ul>
+                {% for key, value in port_info.items %}
+                    {% if key != 'Port_name' and value %}
+                        <li>{{ key }}: {{ value }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </li>
+        {% endfor %}
+     </ul>
+         
+     <strong>Discharge Port:</strong> 
+     <ul>
+        {% for port_info in discharge_date_list %}
+        <li> {{ port_info.Port_name }} <br>
+            <ul>
+                {% for key, value in port_info.items %}
+                    {% if key != 'Port_name' and value %}
+                        <li>{{ key }}: {{ value }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </li>
+        {% endfor %}
+     </ul>
+
+     <strong>Assigned Agent:</strong> 
+     <ul>
+        {% for agent_info in assigned_agent %}
+        <li> {{ agent_info.Agent_name }} <br>
+            <p>
+            {{ agent_info.Agent_info }}
+            </p>
+        </li>
+        {% endfor %}
+     </ul>
+
+    <strong>Vessel Description:</strong>
+    <p>{{vessel.vessel_information}}</p>
+
+{% endblock contenidoQueCambia %}
