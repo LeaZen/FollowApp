@@ -1,0 +1,27 @@
+{% extends 'father.html' %}
+{% block contenidoQueCambia %}
+
+<h1>Prueba Formulario</h1>
+    
+    <h3> {{mensaje}} </h3> 
+    <br>
+    
+    <form action="{% url 'PruebaFormulario' %}" method="post"> {% csrf_token %}
+
+        {{FormularioIngresado.as_p}}
+
+        <button type = "submit"> Create</button>
+       
+    </form>
+    
+    
+
+{% endblock contenidoQueCambia %}
+
+
+    {% comment %}
+        <p>Vessel: <input type="text" name="vessel_name"> </p>
+        <p>Vessel IMO: <input type="number" name="vessel_imo"> </p>
+    {% endcomment %}
+
+

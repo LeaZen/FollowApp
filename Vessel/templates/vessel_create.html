@@ -1,0 +1,34 @@
+{% extends 'father.html' %}
+{% block contenidoQueCambia %}
+
+<h1>Vessel Create</h1>
+    
+    <form action="{% url 'VesselCreate' %}" method="post"> {% csrf_token %}
+    
+        {{form.as_p}}
+        <!-- Loading Port Formset -->
+    <h3>Loading Port</h3>
+    {{ loading_port_formset.management_form }}
+    {% for form in loading_port_formset %}
+        {{ form.as_p }}
+    {% endfor %}
+
+    <!-- Discharge Port Formset -->
+    <h3>Discharge Port</h3>
+    {{ discharge_port_formset.management_form }}
+    {% for form in discharge_port_formset %}
+        {{ form.as_p }}
+    {% endfor %}
+
+    <!-- Vessel Agent Formset -->
+    <h3>Vessel Agent</h3>
+    {{ vessel_agent_formset.management_form }}
+    {% for form in vessel_agent_formset %}
+        {{ form.as_p }}
+    {% endfor %}
+
+    <button type="submit">Create</button>
+</form>
+
+    
+{% endblock contenidoQueCambia %}

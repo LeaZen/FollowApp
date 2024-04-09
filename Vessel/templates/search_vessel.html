@@ -1,0 +1,51 @@
+{% extends 'father.html' %}
+
+{% block contenidoQueCambia %}
+
+<h1>Search Vessel</h1>
+    
+    <form action="{% url 'SearchVessel' %}" method="get"> 
+
+        
+        <P>Vessel:<input type="text", name="vessel_name"></input></P>
+        <P>IMO:<input type="number", name="vessel_imo"></input></P>
+
+        <button type = "submit"> Search</button>
+        <br>
+        {% if vessel %}    
+        <br>       
+            
+            <p><a href="{% url 'VesselDetail' vessel.id %}">{{vessel.vessel_name}} </a></p>
+            <p>Vessel IMO: {{ vessel.vessel_imo }}</p>
+
+        {% elif vessel_imo %}
+        <br>
+            <p>Vessel Name: {{vessel.vessel_name}}</p>
+            <p>Vessel IMO: {{ vessel.vessel_imo }}</p>
+        {% else %}
+        <br>
+            {{message}}
+        {% endif %}
+            
+    </form>
+
+        
+
+
+
+    {% comment %}
+
+    <p>Vessel Name: {{ vessel.vessel_name }}</p>
+          <p> 
+        {% if vessel %}
+        <p>Vessel Name: {{ vessel.vessel_name }}</p>
+        <p>Vessel IMO: {{ vessel.vessel_imo }}</p>
+        {% else %}
+        <p>Vessel Cannot Be Found</p>
+    {% endcomment %}
+
+    
+   
+
+{% endblock contenidoQueCambia %}
+

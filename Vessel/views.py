@@ -4,7 +4,8 @@ from datetime import date, timedelta
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import DeleteView, UpdateView, CreateView
 from django.views.generic.list import ListView
-
+from .forms import VesselPortsAgentFormset, PruebaFormulario
+from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
 
 # Create your views here.
 def inicio (request):
@@ -81,6 +82,8 @@ def expected_arrivals (request):
     return render(request, "expected_arrivals.html", {"expected_arrivals": sorted_existingDates })
 
 
+"""
+# UNA FUNCIÓN QUE NO SE UTILIZA POR EL MOMENTO.
 
 def loading_port_detail (request):
 
@@ -96,21 +99,7 @@ def loading_port_detail (request):
     print (type (mv_ports))
 
     return render(request, "loading_port_detail.html", {"loading_port_detail": mv_ports })
-
 """
-    mv = Vessel.objects.all()
-    mv_ports = LoadingPort.objects.filter(assigned_vessel_pol=21)
-"""
-
-"""
-    if Vessel.loading_port.all:
-     print (Vessel.loading_port.all)
-     for loading_port in Vessel.loading_port.all:
-         loading_port.loading_port_name 
-    else:
-          "No loading ports available."
-""" 
-
 
 class VesselList(ListView):
     model = Vessel 
@@ -118,25 +107,45 @@ class VesselList(ListView):
     context_object_name = "vessels"
 
 
-    """
-    def get_queryset(self):
-        # Imprimir información para depuración
-        for vessel in Vessel.objects.all():
-            print(f"Vessel: {vessel.vessel_name}")
-            for loading_port in vessel.loading_port.all():
-                print(f"Loading Port: {loading_port}")
+def search_vessel(request):
+        
+    print ('method', request.method)
+    print ('get', request.GET)
+    
+    if request.GET:
+        vessel_name = request.GET.get("vessel_name", None)  # Obtener el nombre del buque de la solicitud GET
+        vessel_imo = request.GET.get("vessel_imo", None) # Obtener el imo del buque de la solicitud GET
+        if vessel_name:
+            try:
+                # Buscar el buque en la base de datos por su nombre
+                vessel = Vessel.objects.get(vessel_name=vessel_name)
+                #vessel_id = Vessel.id
+                print("Vessel ID:", vessel.id)
+                print("Vessel name", vessel.vessel_name)
+                
+                # Renderizar la plantilla con el resultado de la búsqueda
+                return render(request, "search_vessel.html", {'vessel': vessel})
+                
+            except Vessel.DoesNotExist:
+                # Si el barco no se encuentra, devolver un mensaje
+                return render(request, "search_vessel.html", { "message" : "Vessel cannot be found"})
 
-        return Vessel.objects.all()
-    """
-"""
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Obtén la instancia del modelo
-        vessel_instance = Vessel.objects.all()
-        # Agrega la instancia al contexto con el nombre 'vessel'
-        context['vessel'] = vessel_instance
-        return context
-"""    
+        elif vessel_imo:
+            try:
+                vessel_imo = Vessel.objects.get(vessel_imo=vessel_imo)
+                print ("Vessel IMO", vessel_imo)
+                return render (request, "search_vessel.html", {"vessel": vessel_imo})
+            except Vessel.DoesNotExist:
+                # Si el barco no se encuentra, devolver un mensaje
+                return render(request, "search_vessel.html", { "message" : "Vessel cannot be found"})
+            
+    # Si no hay parámetros GET o el parámetro 'vessel_name' no está presente, simplemente renderizar la página de resultados vacía
+    return render(request, "search_vessel.html")
+
+ 
+    
+    
+    
 
 class VesselDetail(DetailView):
     model = Vessel
@@ -216,18 +225,175 @@ class VesselDetail(DetailView):
 class VesselCreate(CreateView):
     model = Vessel
     template_name = "vessel_create.html"
-    fields = ["vessel_name","vessel_imo"]
-    success_url = ('vessel/')
+    #fields = ["vessel_name","vessel_imo"]
+    #fields = '__all__' 
+    form_class = VesselPortsAgentFormset
+    success_url = '/vessel/inicio/'
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['loading_port_formset'] = self.form_class.LoadingPortFormset(self.request.POST, instance=self.object)
+            data['discharge_port_formset'] = self.form_class.DischargePortFormset(self.request.POST, instance=self.object)
+            data['vessel_agent_formset'] = self.form_class.VesselAgentFormset(self.request.POST, instance=self.object)
+        else:
+            data['loading_port_formset'] = self.form_class.LoadingPortFormset(instance=self.object)
+            data['discharge_port_formset'] = self.form_class.DischargePortFormset(instance=self.object)
+            data['vessel_agent_formset'] = self.form_class.VesselAgentFormset(instance=self.object)
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        loading_port_formset = context['loading_port_formset']
+        discharge_port_formset = context['discharge_port_formset']
+        vessel_agent_formset = context['vessel_agent_formset']
+        if loading_port_formset.is_valid() and discharge_port_formset.is_valid() and vessel_agent_formset.is_valid():
+            self.object = form.save()
+            loading_port_formset.instance = self.object
+            loading_port_formset.save()
+            discharge_port_formset.instance = self.object
+            discharge_port_formset.save()
+            vessel_agent_formset.instance = self.object
+            vessel_agent_formset.save()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+"""
+    def form_valid(self, form):
+        # Guardar datos de Vessel
+        vessel_name = form.cleaned_data['vessel_name']
+        vessel_imo = form.cleaned_data['vessel_imo']
+        vessel_information = form.cleaned_data['vessel_information']
+        vessel_schedule = form.cleaned_data['vessel_schedule']
+        vessel_rotation = form.cleaned_data['vessel_rotation']
+        
+        vessel = Vessel.objects.create(
+            vessel_name=vessel_name,
+            vessel_imo=vessel_imo,
+            vessel_information=vessel_information,
+            vessel_schedule=vessel_schedule,
+            vessel_rotation=vessel_rotation
+        )
+        
+        # Guardar datos de LoadingPort
+        loading_port_name = form.cleaned_data['loading_port_name']
+        anchor_loading_port = form.cleaned_data['anchor_loading_port']
+        eta_loading_port = form.cleaned_data['eta_loading_port']
+        etb_loading_port = form.cleaned_data['etb_loading_port']
+        ata_loading_port = form.cleaned_data['ata_loading_port']
+        atb_loading_port = form.cleaned_data['atb_loading_port']
+        etd_loading_port = form.cleaned_data['etd_loading_port']
+        atd_loading_port = form.cleaned_data['atd_loading_port']
+
+        # Crea una instancia de LoadingPort y la asocia con el Vessel
+        if loading_port_name or anchor_loading_port or eta_loading_port or etb_loading_port or ata_loading_port or atb_loading_port or etd_loading_port or atd_loading_port:
+            loading_port = LoadingPort.objects.create(
+                loading_port_name=loading_port_name,
+                anchor_loading_port=anchor_loading_port,
+                eta_loading_port=eta_loading_port,
+                etb_loading_port=etb_loading_port,
+                ata_loading_port=ata_loading_port,
+                atb_loading_port=atb_loading_port,
+                etd_loading_port=etd_loading_port,
+                atd_loading_port=atd_loading_port,
+                assigned_vessel_pol=vessel
+            )
+        
+        # Guardar datos de DischargePort
+        discharge_port_name = form.cleaned_data['discharge_port_name']
+        anchor_discharge_port = form.cleaned_data['anchor_discharge_port']
+        eta_discharge_port = form.cleaned_data['eta_discharge_port']
+        etb_discharge_port = form.cleaned_data['etb_discharge_port']
+        ata_discharge_port = form.cleaned_data['ata_discharge_port']
+        atd_discharge_port = form.cleaned_data['atd_discharge_port']
+        
+        # Crea una instancia de DischargePort y la asocia con el Vessel
+        if discharge_port_name or anchor_discharge_port or eta_discharge_port or etb_discharge_port or ata_discharge_port or atd_discharge_port:
+            discharge_port = DischargePort.objects.create(
+                discharge_port_name=discharge_port_name,
+                anchor_discharge_port=anchor_discharge_port,
+                eta_discharge_port=eta_discharge_port,
+                etb_discharge_port=etb_discharge_port,
+                ata_discharge_port=ata_discharge_port,
+                atd_discharge_port=atd_discharge_port,
+                assigned_vessel_pod=vessel
+            )
+
+        # Guardar datos de VesselAgent
+        vessel_agent_name = form.cleaned_data['vessel_agent_name']
+        vessel_agent_info = form.cleaned_data['vessel_agent_info']
+        
+        # Crea una instancia de VesselAgent y la asocia con el Vessel
+        if vessel_agent_name or vessel_agent_info:
+            vessel_agent = VesselAgent.objects.create(
+                vessel_agent_name=vessel_agent_name,
+                vessel_agent_info=vessel_agent_info,
+                assigned_vessel=vessel
+            )
+        return super().form_valid(form)
+    
+"""
 
 class VesselUpdate(UpdateView):
     model = Vessel
     template_name = "vessel_update.html"
-    fields = ["__all__"]
-    success_url = ('vessel/')
+    fields = "__all__"
+    success_url = '/vessel/inicio/'
 
 class VesselDelete(DeleteView):
     model = Vessel
     tate_name = "vessel_delete.html"
-    success_url = ('vessel/')
+    success_url = '/vessel/inicio/'
 
+
+def prueba_formulario(request: HttpRequest):
+    print ('method', request.method)
+    print ('post', request.POST)
+
+    if request.method == 'POST':
+        print (type ('POST'))
+
+        FormularioIngresado = PruebaFormulario(request.POST)
+
+        if FormularioIngresado.is_valid():
+
+            print (FormularioIngresado.cleaned_data)
+
+            data = FormularioIngresado.cleaned_data
+
+            buque = Vessel(vessel_name=data ["vessel_name"], 
+                           vessel_imo=data ["vessel_imo"]
+                           )
+            buque.save()
+
+            FormularioNoIngresado = PruebaFormulario()
+
+            return render (request, "prueba_formulario.html", 
+                           {"FormularioIngresado": FormularioNoIngresado,
+                           "mensaje": "Vessel Added"}
+                           )
+        else:
+            return render (request, "prueba_formulario.html", 
+                           {"mensaje": "Invalid Form / Vessel Not Added" }
+                           )
+    else:
+        FormularioIngresado = PruebaFormulario()
+
+        return render (request, "prueba_formulario.html", 
+                       {"FormularioIngresado": FormularioIngresado}
+                       )
+
+"""
+def prueba_formulario(request: HttpRequest):
+    print ('method', request.method)
+    print ('post', request.POST)
+
+    if request.method == 'POST':
+        buque = Vessel(vessel_name=request.POST ["vessel_name"], vessel_imo=request.POST ["vessel_imo"])
+        buque.save()
+        return render (request, "prueba_formulario.html", {"mensaje": "Buque creado con éxito"})
+    
+    return render (request, "prueba_formulario.html" )
+"""    
  

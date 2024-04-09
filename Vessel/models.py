@@ -15,7 +15,7 @@ class LoadingPort(models.Model):
     assigned_vessel_pol = models.ForeignKey('Vessel', null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return  f"{self.loading_port_name}"
+        return  f"{self.loading_port_name}, {self.assigned_vessel_pol}"
 class DischargePort(models.Model):
 
     discharge_port_name = models.CharField(max_length=50, blank=True, null=True)
@@ -37,7 +37,7 @@ class VesselAgent(models.Model):
     assigned_vessel = models.ForeignKey('Vessel', null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.vessel_agent_name}"
+        return f"{self.vessel_agent_name}, {self.assigned_vessel}"
     
 class Vessel(models.Model):
 
