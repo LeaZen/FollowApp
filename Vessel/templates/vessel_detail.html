@@ -3,6 +3,11 @@
 
 <h1>Vessel Detailed View</h1>
 
+{% if request.GET.mensaje %}
+<h3>{{ request.GET.mensaje }}</h3>
+{% endif %}
+
+
 <p><strong>MV:</strong> {{ vessel }}</p>
 
      <strong>Loading Port:</strong> 
@@ -47,6 +52,11 @@
      </ul>
 
     <strong>Vessel Description:</strong>
+    
+    <p>IMO:{{ vessel.vessel_imo }}</p>
     <p>{{vessel.vessel_information}}</p>
 
+    
+    <a class="btn btn-primary" href="{% url 'VesselUpdate' vessel.id %}">Edit</a>
+    <a class="btn btn-primary" href="{% url 'VesselDelete' vessel.id %}">Delete</a>
 {% endblock contenidoQueCambia %}

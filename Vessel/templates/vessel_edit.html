@@ -1,0 +1,68 @@
+{% extends 'father.html' %}
+{% block contenidoQueCambia %}
+
+<h1>Vessel Edit</h1>
+    
+    <h3> {{mensaje}} </h3> 
+    <br>
+       <div>
+        
+        <form action="{% url 'VesselEdit' id %}" method="post"> {% csrf_token %}
+          
+          <!-- Renderizar cada formulario del formset -->
+          {{ FormularioIngresado.management_form }}
+          {{ FormularioIngresado.as_p }}  
+
+          <!-- Loading Port Formset -->
+          <h3>Loading Port</h3>
+            {{ loading_port_formset.management_form }}
+              {% for form in loading_port_formset %}
+                  {{ form.as_p }}
+              {% endfor %}
+
+          <!-- Discharge Port Formset -->
+          <h3>Discharge Port</h3>
+            {{ discharge_port_formset.management_form }}
+              {% for form in discharge_port_formset %}
+                  {{ form.as_p }}
+              {% endfor %}
+
+          <!-- Vessel Agent Formset -->
+          <h3>Vessel Agent</h3>
+            {{ vessel_agent_formset.management_form }}
+              {% for form in vessel_agent_formset %}
+                  {{ form.as_p }}
+              {% endfor %}
+
+        <button type = "submit"> Edit</button>
+
+        </form>
+
+       </div>
+
+{% endblock contenidoQueCambia %}
+
+
+
+
+{% comment %}
+
+{% for form in FormularioIngresado %}
+           
+                {{form.as_p}}                
+
+          {% endfor %}
+
+{% for field in form.visible_fields %}
+  {{ FormularioIngresado }}
+  {{ id }}        
+  {{ field }} 
+
+{% endfor %}
+
+<form action="{% url 'VesselEdit' id %}" method="post"> {% csrf_token %}
+          
+  {{FormularioIngresado.as_p}}
+
+<button type = "submit"> Edit</button>
+{% endcomment %}

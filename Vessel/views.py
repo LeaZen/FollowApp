@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse
 from .models import Vessel, LoadingPort, DischargePort, VesselAgent
 from datetime import date, timedelta
 from django.views.generic.detail import DetailView
@@ -105,7 +106,7 @@ class VesselList(ListView):
     model = Vessel 
     template_name = "vessel_list.html"
     context_object_name = "vessels"
-
+    #ordering = "-date.created"
 
 def search_vessel(request):
         
@@ -115,31 +116,42 @@ def search_vessel(request):
     if request.GET:
         vessel_name = request.GET.get("vessel_name", None)  # Obtener el nombre del buque de la solicitud GET
         vessel_imo = request.GET.get("vessel_imo", None) # Obtener el imo del buque de la solicitud GET
+        
         if vessel_name:
             try:
-                # Buscar el buque en la base de datos por su nombre
+                # Buscar el buque en la base de datos por su nombre.
                 vessel = Vessel.objects.get(vessel_name=vessel_name)
-                #vessel_id = Vessel.id
                 print("Vessel ID:", vessel.id)
                 print("Vessel name", vessel.vessel_name)
                 
-                # Renderizar la plantilla con el resultado de la búsqueda
-                return render(request, "search_vessel.html", {'vessel': vessel})
-                
+                # Renderiza la plantilla Detail View con el resultado de la búsqueda.
+                url = reverse('VesselDetail', kwargs={'pk': vessel.id}) + '?mensaje=Vessel Finded'
+                return redirect (url)
+            
+                # Este era el return anterior:
+                # return render(request, "search_vessel.html", {'vessel': vessel})    
             except Vessel.DoesNotExist:
-                # Si el barco no se encuentra, devolver un mensaje
+                # Si el buque no se encuentra, devuelve un mensaje.
                 return render(request, "search_vessel.html", { "message" : "Vessel cannot be found"})
 
         elif vessel_imo:
             try:
                 vessel_imo = Vessel.objects.get(vessel_imo=vessel_imo)
                 print ("Vessel IMO", vessel_imo)
-                return render (request, "search_vessel.html", {"vessel": vessel_imo})
+
+                # Renderiza la plantilla Detail View con el resultado de la búsqueda.
+                url = reverse('VesselDetail', kwargs={'pk': vessel_imo.id}) + '?mensaje=Vessel Finded'
+                return redirect (url)
+
+                # Este era el return anterior: 
+                # return render (request, "search_vessel.html", {"vessel": vessel_imo})
+            
+
             except Vessel.DoesNotExist:
-                # Si el barco no se encuentra, devolver un mensaje
+                # Si el buque no se encuentra, devuelve un mensaje.
                 return render(request, "search_vessel.html", { "message" : "Vessel cannot be found"})
             
-    # Si no hay parámetros GET o el parámetro 'vessel_name' no está presente, simplemente renderizar la página de resultados vacía
+    # Si no hay parámetros GET o el parámetro 'vessel_name' no está presente, renderiza la página de resultados vacía.
     return render(request, "search_vessel.html")
 
  
@@ -153,8 +165,8 @@ class VesselDetail(DetailView):
     context_object_name = "vessel"
 
     def get(self, request, *args, **kwargs): 
-       self.object = self.get_object()
-       return self.ports_dates(request, *args, **kwargs)
+       self.object = self.get_object() # Obtiene el objeto del modelo `Vessel` basado en el `pk` pasado en la URL
+       return self.ports_dates(request, *args, **kwargs) # Llama al método `ports_dates` y retorna su resultado
         
     def ports_dates (self, request, *args, **kwargs):
         
@@ -228,7 +240,7 @@ class VesselCreate(CreateView):
     #fields = ["vessel_name","vessel_imo"]
     #fields = '__all__' 
     form_class = VesselPortsAgentFormset
-    success_url = '/vessel/inicio/'
+    success_url = '/vessel/vessels-list/'
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
@@ -260,6 +272,7 @@ class VesselCreate(CreateView):
             return self.render_to_response(self.get_context_data(form=form))
 
 """
+    OTRA FORMA DE VESSEL CREATE
     def form_valid(self, form):
         # Guardar datos de Vessel
         vessel_name = form.cleaned_data['vessel_name']
@@ -339,7 +352,153 @@ class VesselUpdate(UpdateView):
     model = Vessel
     template_name = "vessel_update.html"
     fields = "__all__"
-    success_url = '/vessel/inicio/'
+    success_url = '/vessel/vessels-detail/{}/'
+
+    def get_success_url(self):
+        return reverse('VesselDetail', kwargs={'pk': self.object.pk}) + '?mensaje=Vessel+Successfully+Edited' 
+        #'/vessel/vessels-detail/{}/'.format(self.object.pk) 
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return self.vessel_update(request, self.object.pk)
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return self.vessel_update(request, self.object.pk)
+    
+    def vessel_update(self, request, pk):
+
+        VesselToEdit = self.get_object()
+    
+        if request.method == 'POST':
+
+            FormularioIngresado = self.get_form()
+            FormularioIngresado = VesselPortsAgentFormset(request.POST, instance=VesselToEdit)
+            loading_port_formset = VesselPortsAgentFormset.LoadingPortFormset(request.POST, instance=VesselToEdit)
+            discharge_port_formset = VesselPortsAgentFormset.DischargePortFormset(request.POST, instance=VesselToEdit)
+            vessel_agent_formset = VesselPortsAgentFormset.VesselAgentFormset(request.POST, instance=VesselToEdit)
+
+            if FormularioIngresado.is_valid() and loading_port_formset.is_valid() and discharge_port_formset.is_valid() and vessel_agent_formset.is_valid():
+                
+                FormularioIngresado.save()
+                VesselToEdit.save()
+                loading_port_formset.save()
+                discharge_port_formset.save()
+                vessel_agent_formset.save()
+                
+                url = self.get_success_url() 
+                return redirect(url)
+            
+            else:
+              return render (request, "vessel_update.html", 
+                             {"mensaje": "Invalid Form / Vessel Not Edited",
+                              "FormularioIngresado": FormularioIngresado, 
+                              "loading_port_formset": loading_port_formset,
+                              "discharge_port_formset": discharge_port_formset,
+                              "vessel_agent_formset": vessel_agent_formset,
+                              "id": pk 
+                              })
+        else:
+          FormularioIngresado = self.get_form()
+          FormularioIngresado = VesselPortsAgentFormset (instance=VesselToEdit)
+          loading_port_formset = VesselPortsAgentFormset.LoadingPortFormset(instance=VesselToEdit)
+          discharge_port_formset = VesselPortsAgentFormset.DischargePortFormset(instance=VesselToEdit)
+          vessel_agent_formset = VesselPortsAgentFormset.VesselAgentFormset(instance=VesselToEdit)
+
+        return render (request, "vessel_update.html", 
+                   {"FormularioIngresado": FormularioIngresado, 
+                    "loading_port_formset": loading_port_formset,
+                    "discharge_port_formset": discharge_port_formset,
+                    "vessel_agent_formset": vessel_agent_formset,
+                    "id": pk
+                    })
+
+"""
+# 1 EDIT CON FORMULARIO MANUAL / FUNCIONA
+
+def vessel_edit(request, id):
+
+    VesselToEdit = Vessel.objects.get (id=id)
+    
+    if request.method == 'POST':
+
+            FormularioIngresado = PruebaFormulario(request.POST)
+
+            if FormularioIngresado.is_valid():
+
+                data = FormularioIngresado.cleaned_data
+                
+                VesselToEdit.vessel_name = data["vessel_name"]
+                VesselToEdit.vessel_imo = data ["vessel_imo"]
+                VesselToEdit.save()
+            
+                return render (request, "vessel_edit.html", 
+                               {"mensaje": "Vessel Edited", 
+                                "id": VesselToEdit.id})
+            
+            else:
+              #print(FormularioIngresado.errors)
+              return render (request, "vessel_edit.html", 
+                             {"mensaje": "Invalid Form / Vessel Not Edited", 
+                              "id": VesselToEdit.id})
+    else:
+          FormularioIngresado = PruebaFormulario (initial=
+                            {"vessel_name": VesselToEdit.vessel_name,
+                            "vessel_imo": VesselToEdit.vessel_imo})
+          #print (VesselToEdit.vessel_name)
+        
+    return render (request, "vessel_edit.html", 
+                   {"FormularioIngresado": FormularioIngresado, 
+                    "id": VesselToEdit.id})
+
+"""
+
+"""
+#  2 EDIT CON INLINE FORMSET / FUNCIONA
+
+def vessel_edit(request, id):
+
+    VesselToEdit = Vessel.objects.get (id=id)
+    
+    if request.method == 'POST':
+
+            FormularioIngresado = VesselPortsAgentFormset(request.POST, instance=VesselToEdit)
+            loading_port_formset = VesselPortsAgentFormset.LoadingPortFormset(request.POST, instance=VesselToEdit)
+            discharge_port_formset = VesselPortsAgentFormset.DischargePortFormset(request.POST, instance=VesselToEdit)
+            vessel_agent_formset = VesselPortsAgentFormset.VesselAgentFormset(request.POST, instance=VesselToEdit)
+
+            if FormularioIngresado.is_valid() and loading_port_formset.is_valid() and discharge_port_formset.is_valid() and vessel_agent_formset.is_valid():
+                
+                VesselToEdit.save()
+                loading_port_formset.save()
+                discharge_port_formset.save()
+                vessel_agent_formset.save()
+                
+                url = reverse('VesselDetail', kwargs={'pk': id}) + '?mensaje=Vessel Successfully Edited'
+                return redirect (url) 
+                
+            
+            else:
+              return render (request, "vessel_edit.html", 
+                             {"mensaje": "Invalid Form / Vessel Not Edited",
+                              "FormularioIngresado": FormularioIngresado, 
+                              "loading_port_formset": loading_port_formset,
+                              "discharge_port_formset": discharge_port_formset,
+                              "vessel_agent_formset": vessel_agent_formset, 
+                              "id": VesselToEdit.id})
+    else:
+          FormularioIngresado = VesselPortsAgentFormset (instance=VesselToEdit)
+          loading_port_formset = VesselPortsAgentFormset.LoadingPortFormset(instance=VesselToEdit)
+          discharge_port_formset = VesselPortsAgentFormset.DischargePortFormset(instance=VesselToEdit)
+          vessel_agent_formset = VesselPortsAgentFormset.VesselAgentFormset(instance=VesselToEdit)
+
+    return render (request, "vessel_edit.html", 
+                   {"FormularioIngresado": FormularioIngresado, 
+                    "loading_port_formset": loading_port_formset,
+                    "discharge_port_formset": discharge_port_formset,
+                    "vessel_agent_formset": vessel_agent_formset,
+                    "id": VesselToEdit.id})
+"""
 
 class VesselDelete(DeleteView):
     model = Vessel
@@ -347,13 +506,16 @@ class VesselDelete(DeleteView):
     success_url = '/vessel/inicio/'
 
 
+
+
+
+
 def prueba_formulario(request: HttpRequest):
     print ('method', request.method)
     print ('post', request.POST)
 
     if request.method == 'POST':
-        print (type ('POST'))
-
+        
         FormularioIngresado = PruebaFormulario(request.POST)
 
         if FormularioIngresado.is_valid():
@@ -378,22 +540,33 @@ def prueba_formulario(request: HttpRequest):
                            {"mensaje": "Invalid Form / Vessel Not Added" }
                            )
     else:
-        FormularioIngresado = PruebaFormulario()
+     FormularioIngresado = PruebaFormulario()
 
-        return render (request, "prueba_formulario.html", 
+     return render (request, "prueba_formulario.html", 
                        {"FormularioIngresado": FormularioIngresado}
                        )
 
-"""
-def prueba_formulario(request: HttpRequest):
-    print ('method', request.method)
-    print ('post', request.POST)
 
-    if request.method == 'POST':
-        buque = Vessel(vessel_name=request.POST ["vessel_name"], vessel_imo=request.POST ["vessel_imo"])
-        buque.save()
-        return render (request, "prueba_formulario.html", {"mensaje": "Buque creado con éxito"})
+def vessel_delete(request, id):
     
-    return render (request, "prueba_formulario.html" )
-"""    
- 
+    if request.method == 'POST':
+        
+        VesselToDelete = Vessel.objects.get (id=id)
+
+        if VesselToDelete:
+            
+            VesselToDelete.delete()
+
+            vessels = Vessel.objects.all()
+            
+            return render (request, "vessel_delete.html", 
+                           {"mensaje": "Vessel Successfully Deleted","vessels": vessels}
+                           )
+        else:
+            return render (request, "vessel_delete.html", 
+                           {"mensaje": "Invalid Form / Vessel Not Deleted" }
+                           )
+    else:
+        vessels = Vessel.objects.all()
+        return render (request, "vessel_delete.html", {"vessels": vessels})
+    

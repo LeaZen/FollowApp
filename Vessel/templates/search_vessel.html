@@ -15,13 +15,13 @@
         {% if vessel %}    
         <br>       
             
-            <p><a href="{% url 'VesselDetail' vessel.id %}">{{vessel.vessel_name}} </a></p>
-            <p>Vessel IMO: {{ vessel.vessel_imo }}</p>
+            <p>MV: <a href="{% url 'VesselDetail' vessel.id %}">{{vessel.vessel_name}} </a></p>
+            <p>IMO: {{ vessel.vessel_imo }}</p>
 
         {% elif vessel_imo %}
         <br>
-            <p>Vessel Name: {{vessel.vessel_name}}</p>
-            <p>Vessel IMO: {{ vessel.vessel_imo }}</p>
+            <p>MV: {{vessel.vessel_name}}</p>
+            <p>IMO: {{ vessel.vessel_imo }}</p>
         {% else %}
         <br>
             {{message}}
