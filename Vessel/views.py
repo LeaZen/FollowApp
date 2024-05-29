@@ -228,12 +228,9 @@ class VesselDetail(DetailView):
             "assigned_agent": agent_vessel_list,
             }
     
-
      return render(request, "vessel_detail.html", context)
     
         
-
-
 class VesselCreate(CreateView):
     model = Vessel
     template_name = "vessel_create.html"
@@ -286,8 +283,7 @@ class VesselCreate(CreateView):
             vessel_imo=vessel_imo,
             vessel_information=vessel_information,
             vessel_schedule=vessel_schedule,
-            vessel_rotation=vessel_rotation
-        )
+            vessel_rotation=vessel_rotation)
         
         # Guardar datos de LoadingPort
         loading_port_name = form.cleaned_data['loading_port_name']
@@ -310,8 +306,7 @@ class VesselCreate(CreateView):
                 atb_loading_port=atb_loading_port,
                 etd_loading_port=etd_loading_port,
                 atd_loading_port=atd_loading_port,
-                assigned_vessel_pol=vessel
-            )
+                assigned_vessel_pol=vessel)
         
         # Guardar datos de DischargePort
         discharge_port_name = form.cleaned_data['discharge_port_name']
@@ -330,8 +325,7 @@ class VesselCreate(CreateView):
                 etb_discharge_port=etb_discharge_port,
                 ata_discharge_port=ata_discharge_port,
                 atd_discharge_port=atd_discharge_port,
-                assigned_vessel_pod=vessel
-            )
+                assigned_vessel_pod=vessel)
 
         # Guardar datos de VesselAgent
         vessel_agent_name = form.cleaned_data['vessel_agent_name']
@@ -342,12 +336,9 @@ class VesselCreate(CreateView):
             vessel_agent = VesselAgent.objects.create(
                 vessel_agent_name=vessel_agent_name,
                 vessel_agent_info=vessel_agent_info,
-                assigned_vessel=vessel
-            )
+                assigned_vessel=vessel)
         return super().form_valid(form)
-    
 """
-
 class VesselUpdate(UpdateView):
     model = Vessel
     template_name = "vessel_update.html"
@@ -452,7 +443,6 @@ def vessel_edit(request, id):
                     "id": VesselToEdit.id})
 
 """
-
 """
 #  2 EDIT CON INLINE FORMSET / FUNCIONA
 
@@ -477,7 +467,6 @@ def vessel_edit(request, id):
                 url = reverse('VesselDetail', kwargs={'pk': id}) + '?mensaje=Vessel Successfully Edited'
                 return redirect (url) 
                 
-            
             else:
               return render (request, "vessel_edit.html", 
                              {"mensaje": "Invalid Form / Vessel Not Edited",
@@ -499,16 +488,66 @@ def vessel_edit(request, id):
                     "vessel_agent_formset": vessel_agent_formset,
                     "id": VesselToEdit.id})
 """
-
 class VesselDelete(DeleteView):
     model = Vessel
-    tate_name = "vessel_delete.html"
-    success_url = '/vessel/inicio/'
+    template_name = "vessel_delete_confirmation.html"
+    success_url = '/vessel/vessels-list/'
+    
+    def get_success_url(self):
+        return reverse ('VesselList') + '?mensaje=Vessel+Successfully+Deleted' 
+
+"""
+# 1 VESSEL DELETE / FUNCIONA
+
+def vessel_delete(request, id):
+    
+    if request.method == 'POST':
+        
+        VesselToDelete = Vessel.objects.get (id=id)
+
+        if VesselToDelete:
+            
+            VesselToDelete.delete()
+
+            vessels = Vessel.objects.all()
+            
+            return render (request, "vessel_delete.html", 
+                           {"mensaje": "Vessel Successfully Deleted","vessels": vessels}
+                           )
+        else:
+            return render (request, "vessel_delete.html", 
+                           {"mensaje": "Invalid Form / Vessel Not Deleted" }
+                           )
+    else:
+        vessels = Vessel.objects.all()
+        return render (request, "vessel_delete.html", {"vessel": vessels})
+"""
+"""
+# 2 VESSEL DELETE / CON TRY / EXCEPT FUNCIONA
+
+def vessel_delete(request, id):
+    
+    try:
+        VesselToDelete = Vessel.objects.get(id=id)
+    except Vessel.DoesNotExist:
+        vessels = Vessel.objects.all()
+        return render(request, "vessel_delete.html", 
+                      {"mensaje": "Vessel Not Found", "vessels": vessels})
 
 
-
-
-
+    if request.method == 'POST':
+        VesselToDelete = Vessel.objects.get (id=id)
+        VesselToDelete.delete()
+        vessels = Vessel.objects.all()       
+        return render (request, "vessel_delete.html", 
+                           {"mensaje": "Vessel Successfully Deleted","vessels": vessels}
+                           )  
+    else:
+        vessels = Vessel.objects.all()
+        return render (request, "vessel_delete_confirmation.html", {"mensaje": "Are you sure to delete this vessel?", "vessel": VesselToDelete})
+        
+        #return render (request, "vessel_delete.html", {"vessel": vessels})
+"""
 
 def prueba_formulario(request: HttpRequest):
     print ('method', request.method)
@@ -545,28 +584,3 @@ def prueba_formulario(request: HttpRequest):
      return render (request, "prueba_formulario.html", 
                        {"FormularioIngresado": FormularioIngresado}
                        )
-
-
-def vessel_delete(request, id):
-    
-    if request.method == 'POST':
-        
-        VesselToDelete = Vessel.objects.get (id=id)
-
-        if VesselToDelete:
-            
-            VesselToDelete.delete()
-
-            vessels = Vessel.objects.all()
-            
-            return render (request, "vessel_delete.html", 
-                           {"mensaje": "Vessel Successfully Deleted","vessels": vessels}
-                           )
-        else:
-            return render (request, "vessel_delete.html", 
-                           {"mensaje": "Invalid Form / Vessel Not Deleted" }
-                           )
-    else:
-        vessels = Vessel.objects.all()
-        return render (request, "vessel_delete.html", {"vessels": vessels})
-    

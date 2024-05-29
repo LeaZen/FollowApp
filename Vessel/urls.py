@@ -17,7 +17,7 @@ urlpatterns = [
 
     #Estos Path son de prueba.
     path('prueba-formulario/', prueba_formulario, name= 'PruebaFormulario'),
-    path('vessel-delete/<id>', vessel_delete, name= 'VesselDelete'),
+    #path('vessel-delete/<id>', vessel_delete, name= 'VesselDelete'),
     #path('vessel-edit/<id>', vessel_edit, name= 'VesselEdit'),
 
     path('search-vessel/', search_vessel, name= 'SearchVessel'),

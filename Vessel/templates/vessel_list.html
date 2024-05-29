@@ -3,6 +3,10 @@
 
 <h1>Vessel List</h1>
 
+{% if request.GET.mensaje %}
+<h3>{{ request.GET.mensaje }}</h3>
+{% endif %}
+  <br>
   <a class="btn btn-primary" href="{% url 'VesselCreate' %}">Add</a>
   <a class="btn btn-primary" href="{% url 'SearchVessel' %}">Search</a>
   <br>

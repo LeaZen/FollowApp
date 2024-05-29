@@ -1,0 +1,24 @@
+{% extends 'father.html' %}
+
+{% block contenidoQueCambia %}
+    <br>
+    <h3> Are you sure to delete this vessel? </h3> 
+    
+       <div>
+        <form action="{% url 'VesselDelete' vessel.id %}" method="post"> {% csrf_token %}
+            {{vessel}}
+            <br>
+            <br>
+            <button type = "submit"> Delete</button>
+           
+        </form>
+        
+        <button type="button"><a href="{% url 'VesselList' %}">Cancel</a></button>
+            
+            
+       </div>
+    
+    
+    
+
+{% endblock contenidoQueCambia %}

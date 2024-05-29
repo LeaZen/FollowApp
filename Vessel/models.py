@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.utils import timezone
 # Create your models here.
 
 class LoadingPort(models.Model):
@@ -56,6 +56,7 @@ class Vessel(models.Model):
     status_complete = models.BooleanField(blank=True, null=True)
     assigned_agent = models.ManyToManyField(VesselAgent, blank=True)
     transit_time = models.IntegerField(blank=True, null=True)
+    vessel_created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     def __str__(self):
         return self.vessel_name
